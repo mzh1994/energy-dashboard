@@ -2,9 +2,11 @@ import streamlit as st
 import pandas as pd
 
 from datetime import datetime, date
-from zoneinfo import ZoneInfo
-from textwrap import dedent
 
+
+# =========================================================
+# PAGE
+# =========================================================
 
 st.set_page_config(
     page_title="Energy",
@@ -14,32 +16,45 @@ st.set_page_config(
 
 # =========================================================
 # BILLING CYCLE
+# Previous KE reading date: 04-Sep-2026
+# Current provisional cycle: 05-Sep-2026 to 04-Oct-2026
 # =========================================================
 
 CYCLE_START = date(2026, 9, 5)
 CYCLE_END = date(2026, 10, 4)
 
-MONTH_LABEL = CYCLE_END.strftime("%B %Y")
-LAST_MONTH_LABEL = "September 2026"
+CYCLE_LABEL = "05 Sep – 04 Oct 2026"
 
-today = datetime.now(ZoneInfo("Asia/Karachi")).date()
-
-cycle_days = (CYCLE_END - CYCLE_START).days + 1
-days_passed = (today - CYCLE_START).days + 1
-days_passed = max(1, min(days_passed, cycle_days))
+CYCLE_DAYS = (CYCLE_END - CYCLE_START).days + 1
 
 
 # =========================================================
-# LAST ACTUAL BILL / STARTING READINGS
+# METERS
 # =========================================================
 
-# Ground Floor - TP66310 - 3 Phase
-TP_OFF_START = 5281
-TP_PEAK_START = 723
-TP_TOTAL_START = 6004
+# Ground Floor
+# 3 Phase / Peak + Off-Peak
+GROUND_METER = "TP66310"
 
-TP_LAST_UNITS = 37
-TP_LAST_BILL = 3790.27
+# First Floor
+FIRST_METER = "SFS23934"
+
+# Second Floor
+SECOND_METER = "SFS82166"
+
+
+# =========================================================
+# PREVIOUS ACTUAL BILL
+# KE reading date: 04-Sep-2026
+# =========================================================
+
+# Ground Floor - TP66310
+GROUND_OFF_START = 5281
+GROUND_PEAK_START = 723
+GROUND_TOTAL_START = 6004
+
+GROUND_LAST_UNITS = 37
+GROUND_LAST_BILL = 3790.27
 
 
 # First Floor - SFS23934
@@ -57,9 +72,9 @@ SECOND_LAST_BILL = 5708.64
 
 
 # =========================================================
-# METER READINGS
+# READINGS
 #
-# Add every new reading here.
+# Add every new reading at the bottom of this list.
 # =========================================================
 
 READINGS = [
@@ -68,598 +83,623 @@ READINGS = [
         "datetime": datetime(2026, 9, 28, 9, 0),
         "first": 5046,
         "second": 2118,
-        "tp_off": 5303,
-        "tp_peak": 732,
+        "ground_off": 5303,
+        "ground_peak": 732,
     },
 
     {
         "datetime": datetime(2026, 9, 29, 8, 15),
         "first": 5062,
         "second": 2118,
-        "tp_off": 5303,
-        "tp_peak": 733,
+        "ground_off": 5303,
+        "ground_peak": 733,
     },
 
 ]
 
 
 # =========================================================
-# BILL CALCULATIONS
+# TARIFFS
 # =========================================================
 
-def single_phase_bill(units, load):
+PHL_RATE = 3.23
+ELECTRICITY_DUTY_RATE = 0.015
+SALES_TAX_RATE = 0.18
+
+GROUND_OFF_RATE = 34.53
+GROUND_PEAK_RATE = 46.85
+
+# Previous actual bill charged 2.5 x Rs 675 fixed charge
+GROUND_FIXED_BILLING_KW = 2.5
+GROUND_FIXED_RATE = 675
+
+
+def single_phase_tariff(units):
 
     if units <= 100:
-        rate = 22.44
-        fixed_rate = 275
-        muct = 0
+        return 22.44, 275, 0
 
     elif units <= 200:
-        rate = 28.91
-        fixed_rate = 300
-        muct = 20
+        return 28.91, 300, 20
 
     elif units <= 300:
-        rate = 33.10
-        fixed_rate = 350
-        muct = 40
+        return 33.10, 350, 40
 
     elif units <= 400:
-        rate = 36.46
-        fixed_rate = 400
-        muct = 100
+        return 36.46, 400, 100
 
     elif units <= 500:
-        rate = 38.95
-        fixed_rate = 500
-        muct = 125
+        return 38.95, 500, 125
 
     elif units <= 600:
-        rate = 40.22
-        fixed_rate = 675
-        muct = 150
+        return 40.22, 675, 150
 
     elif units <= 700:
-        rate = 41.85
-        fixed_rate = 675
-        muct = 175
+        return 41.85, 675, 175
 
     else:
-        rate = 47.20
-        fixed_rate = 675
-        muct = 300
-
-    variable = units * rate
-    fixed = load * fixed_rate
-    phl = units * 3.23
-
-    subtotal = variable + fixed + phl + muct
-
-    estimated_bill = subtotal * 1.1985
-
-    return estimated_bill, rate
-
-
-def three_phase_bill(off_peak, peak):
-
-    off_rate = 34.53
-    peak_rate = 46.85
-
-    off_energy = off_peak * off_rate
-    peak_energy = peak * peak_rate
-
-    total_units = off_peak + peak
-
-    fixed = 2.5 * 675
-    phl = total_units * 3.23
-
-    subtotal = off_energy + peak_energy + fixed + phl
-
-    total_bill = subtotal * 1.1883
-
-    energy_total = off_energy + peak_energy
-
-    if energy_total > 0:
-
-        off_bill = total_bill * (
-            off_energy / energy_total
-        )
-
-        peak_bill = total_bill * (
-            peak_energy / energy_total
-        )
-
-    else:
-
-        off_bill = 0
-        peak_bill = 0
-
-    if total_units > 0:
-
-        average_rate = (
-            off_energy + peak_energy
-        ) / total_units
-
-    else:
-
-        average_rate = 0
-
-    return (
-        off_bill,
-        peak_bill,
-        total_bill,
-        off_rate,
-        peak_rate,
-        average_rate
-    )
+        return 47.20, 675, 300
 
 
 # =========================================================
-# CURRENT VALUES
+# ACCUMULATED BILL ESTIMATION
+#
+# This includes:
+# - Variable energy
+# - Fixed charges
+# - PHL surcharge
+# - Estimated electricity duty
+# - Estimated sales tax
+# - MUCT where applicable
+#
+# FCA / quarterly adjustments are NOT predictable before
+# the actual KE bill arrives.
+# =========================================================
+
+def single_phase_bill(units, load_kw):
+
+    rate, fixed_rate, muct = single_phase_tariff(units)
+
+    energy = units * rate
+    fixed = load_kw * fixed_rate
+    phl = units * PHL_RATE
+
+    duty = (
+        energy + fixed
+    ) * ELECTRICITY_DUTY_RATE
+
+    sales_tax = (
+        energy +
+        fixed +
+        phl +
+        duty
+    ) * SALES_TAX_RATE
+
+    total = (
+        energy +
+        fixed +
+        phl +
+        duty +
+        sales_tax +
+        muct
+    )
+
+    return {
+        "total": total,
+        "rate": rate,
+        "energy": energy,
+        "fixed": fixed,
+    }
+
+
+def ground_bill(off_units, peak_units):
+
+    off_energy = off_units * GROUND_OFF_RATE
+    peak_energy = peak_units * GROUND_PEAK_RATE
+
+    energy = off_energy + peak_energy
+
+    total_units = off_units + peak_units
+
+    fixed = (
+        GROUND_FIXED_BILLING_KW *
+        GROUND_FIXED_RATE
+    )
+
+    phl = total_units * PHL_RATE
+
+    duty = (
+        energy + fixed
+    ) * ELECTRICITY_DUTY_RATE
+
+    sales_tax = (
+        energy +
+        fixed +
+        phl +
+        duty
+    ) * SALES_TAX_RATE
+
+    total = (
+        energy +
+        fixed +
+        phl +
+        duty +
+        sales_tax
+    )
+
+    return {
+        "total": total,
+        "off_energy": off_energy,
+        "peak_energy": peak_energy,
+    }
+
+
+# =========================================================
+# CURRENT READING
 # =========================================================
 
 latest = READINGS[-1]
 
-first_units = latest["first"] - FIRST_START
-second_units = latest["second"] - SECOND_START
+latest_date = latest["datetime"].date()
 
-tp_off_units = latest["tp_off"] - TP_OFF_START
-tp_peak_units = latest["tp_peak"] - TP_PEAK_START
+days_passed = (
+    latest_date - CYCLE_START
+).days + 1
 
-tp_total_units = tp_off_units + tp_peak_units
+days_passed = max(
+    1,
+    min(days_passed, CYCLE_DAYS)
+)
 
 
-first_bill, first_rate = single_phase_bill(
+# =========================================================
+# CURRENT CONSUMPTION
+# =========================================================
+
+first_units = (
+    latest["first"] -
+    FIRST_START
+)
+
+second_units = (
+    latest["second"] -
+    SECOND_START
+)
+
+ground_off_units = (
+    latest["ground_off"] -
+    GROUND_OFF_START
+)
+
+ground_peak_units = (
+    latest["ground_peak"] -
+    GROUND_PEAK_START
+)
+
+ground_total_units = (
+    ground_off_units +
+    ground_peak_units
+)
+
+
+# =========================================================
+# CURRENT BILL ESTIMATES
+# =========================================================
+
+first_bill = single_phase_bill(
     first_units,
     5
 )
 
-second_bill, second_rate = single_phase_bill(
+second_bill = single_phase_bill(
     second_units,
     3
 )
 
-(
-    tp_off_bill,
-    tp_peak_bill,
-    tp_total_bill,
-    tp_off_rate,
-    tp_peak_rate,
-    tp_average_rate
-) = three_phase_bill(
-    tp_off_units,
-    tp_peak_units
+ground_bill_data = ground_bill(
+    ground_off_units,
+    ground_peak_units
 )
 
 
 # =========================================================
-# STYLE
+# PREVIOUS ACTUAL BILL
 # =========================================================
 
-st.markdown(
-    """
-    <style>
-
-    .block-container {
-        padding-top: 1.4rem;
-        padding-bottom: 2rem;
-    }
-
-    .section {
-        font-size: 22px;
-        font-weight: 700;
-        margin-top: 12px;
-        margin-bottom: 12px;
-    }
-
-    .small-card {
-        border: 1px solid #dddddd;
-        border-radius: 14px;
-        padding: 14px 18px;
-        min-height: 120px;
-    }
-
-    .main-card {
-        border: 1px solid #dddddd;
-        border-radius: 14px;
-        padding: 18px;
-        min-height: 205px;
-    }
-
-    .card-title {
-        font-size: 18px;
-        font-weight: 700;
-        margin-bottom: 10px;
-    }
-
-    .small-number {
-        font-size: 18px;
-        font-weight: 600;
-        margin: 4px 0;
-    }
-
-    .big-number {
-        font-size: 32px;
-        font-weight: 700;
-        margin: 12px 0 3px 0;
-    }
-
-    .bill-number {
-        font-size: 22px;
-        font-weight: 600;
-        margin-bottom: 6px;
-    }
-
-    .rate {
-        font-size: 14px;
-        opacity: 0.72;
-    }
-
-    .tp-grid {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 8px;
-        margin-top: 12px;
-    }
-
-    .tp-box {
-        border: 1px solid #e5e5e5;
-        border-radius: 10px;
-        padding: 10px;
-        text-align: center;
-    }
-
-    .tp-title {
-        font-size: 14px;
-        font-weight: 700;
-    }
-
-    .tp-units {
-        font-size: 22px;
-        font-weight: 700;
-        margin-top: 6px;
-    }
-
-    .tp-bill {
-        font-size: 15px;
-        margin-top: 4px;
-    }
-
-    .tp-rate {
-        font-size: 12px;
-        opacity: 0.7;
-        margin-top: 4px;
-    }
-
-    @media (max-width: 700px) {
-        .tp-grid {
-            grid-template-columns: 1fr;
-        }
-    }
-
-    </style>
-    """,
-    unsafe_allow_html=True
-)
-
-
-# =========================================================
-# LAST MONTH ACTUAL
-# =========================================================
-
-st.markdown(
-    f'<div class="section">{LAST_MONTH_LABEL} — Actual</div>',
-    unsafe_allow_html=True
-)
-
+st.subheader("Sep 2026 Actual")
 
 c1, c2, c3 = st.columns(3)
 
 
 with c1:
 
-    st.markdown(
-        dedent(
-            f"""
-            <div class="small-card">
-                <div class="card-title">Ground Floor · TP66310</div>
-                <div class="small-number">{TP_TOTAL_START:,} kWh closing</div>
-                <div>{TP_LAST_UNITS} kWh billed</div>
-                <div class="small-number">Rs {TP_LAST_BILL:,.0f}</div>
-            </div>
-            """
-        ),
-        unsafe_allow_html=True
-    )
+    with st.container(border=True):
+
+        st.markdown(
+            "**Ground Floor · TP66310**"
+        )
+
+        st.metric(
+            "Closing",
+            f"{GROUND_TOTAL_START:,} kWh"
+        )
+
+        st.metric(
+            "Actual Bill",
+            f"Rs {GROUND_LAST_BILL:,.0f}"
+        )
 
 
 with c2:
 
-    st.markdown(
-        dedent(
-            f"""
-            <div class="small-card">
-                <div class="card-title">First Floor · SFS23934</div>
-                <div class="small-number">{FIRST_START:,} kWh closing</div>
-                <div>{FIRST_LAST_UNITS} kWh billed</div>
-                <div class="small-number">Rs {FIRST_LAST_BILL:,.0f}</div>
-            </div>
-            """
-        ),
-        unsafe_allow_html=True
-    )
+    with st.container(border=True):
+
+        st.markdown(
+            "**First Floor · SFS23934**"
+        )
+
+        st.metric(
+            "Closing",
+            f"{FIRST_START:,} kWh"
+        )
+
+        st.metric(
+            "Actual Bill",
+            f"Rs {FIRST_LAST_BILL:,.0f}"
+        )
 
 
 with c3:
 
-    st.markdown(
-        dedent(
-            f"""
-            <div class="small-card">
-                <div class="card-title">Second Floor · SFS82166</div>
-                <div class="small-number">{SECOND_START:,} kWh closing</div>
-                <div>{SECOND_LAST_UNITS} kWh billed</div>
-                <div class="small-number">Rs {SECOND_LAST_BILL:,.0f}</div>
-            </div>
-            """
-        ),
-        unsafe_allow_html=True
-    )
+    with st.container(border=True):
+
+        st.markdown(
+            "**Second Floor · SFS82166**"
+        )
+
+        st.metric(
+            "Closing",
+            f"{SECOND_START:,} kWh"
+        )
+
+        st.metric(
+            "Actual Bill",
+            f"Rs {SECOND_LAST_BILL:,.0f}"
+        )
 
 
 # =========================================================
-# CURRENT MONTH
+# CURRENT CYCLE
 # =========================================================
 
-st.markdown(
-    f'<div class="section">{MONTH_LABEL} (Day {days_passed} of {cycle_days})</div>',
-    unsafe_allow_html=True
+st.subheader(
+    f"{CYCLE_LABEL} "
+    f"(Day {days_passed} of {CYCLE_DAYS})"
 )
 
 
 c1, c2, c3 = st.columns(3)
 
 
-# Ground Floor - 3 Phase
+# =========================================================
+# GROUND FLOOR
+# =========================================================
 
 with c1:
 
-    st.markdown(
-        dedent(
-            f"""
-            <div class="main-card">
+    with st.container(border=True):
 
-                <div class="card-title">
-                    Ground Floor · TP66310
-                </div>
+        st.markdown(
+            "**Ground Floor · TP66310**"
+        )
 
-                <div class="tp-grid">
+        a, b = st.columns(2)
 
-                    <div class="tp-box">
-                        <div class="tp-title">Off-Peak</div>
-                        <div class="tp-units">{tp_off_units} kWh</div>
-                        <div class="tp-bill">Rs {tp_off_bill:,.0f}</div>
-                        <div class="tp-rate">Rs {tp_off_rate:.2f}/kWh</div>
-                    </div>
+        with a:
 
-                    <div class="tp-box">
-                        <div class="tp-title">Peak</div>
-                        <div class="tp-units">{tp_peak_units} kWh</div>
-                        <div class="tp-bill">Rs {tp_peak_bill:,.0f}</div>
-                        <div class="tp-rate">Rs {tp_peak_rate:.2f}/kWh</div>
-                    </div>
+            st.metric(
+                "Off-Peak",
+                f"{ground_off_units} kWh"
+            )
 
-                    <div class="tp-box">
-                        <div class="tp-title">Total</div>
-                        <div class="tp-units">{tp_total_units} kWh</div>
-                        <div class="tp-bill">Rs {tp_total_bill:,.0f}</div>
-                        <div class="tp-rate">Avg Rs {tp_average_rate:.2f}/kWh</div>
-                    </div>
+            st.caption(
+                f"Rs {GROUND_OFF_RATE:.2f}/kWh"
+            )
 
-                </div>
+            st.caption(
+                f"Energy Rs "
+                f"{ground_bill_data['off_energy']:,.0f}"
+            )
 
-            </div>
-            """
-        ),
-        unsafe_allow_html=True
-    )
+        with b:
+
+            st.metric(
+                "Peak",
+                f"{ground_peak_units} kWh"
+            )
+
+            st.caption(
+                f"Rs {GROUND_PEAK_RATE:.2f}/kWh"
+            )
+
+            st.caption(
+                f"Energy Rs "
+                f"{ground_bill_data['peak_energy']:,.0f}"
+            )
+
+        st.divider()
+
+        st.metric(
+            "Total",
+            f"{ground_total_units} kWh"
+        )
+
+        st.metric(
+            "Estimated Bill",
+            f"Rs {ground_bill_data['total']:,.0f}"
+        )
 
 
-# First Floor
+# =========================================================
+# FIRST FLOOR
+# =========================================================
 
 with c2:
 
-    st.markdown(
-        dedent(
-            f"""
-            <div class="main-card">
+    with st.container(border=True):
 
-                <div class="card-title">
-                    First Floor · SFS23934
-                </div>
+        st.markdown(
+            "**First Floor · SFS23934**"
+        )
 
-                <div class="big-number">
-                    {first_units} kWh
-                </div>
+        st.metric(
+            "Consumption",
+            f"{first_units} kWh"
+        )
 
-                <div class="bill-number">
-                    Rs {first_bill:,.0f}
-                </div>
+        st.metric(
+            "Estimated Bill",
+            f"Rs {first_bill['total']:,.0f}"
+        )
 
-                <div class="rate">
-                    Rs {first_rate:.2f}/kWh
-                </div>
-
-            </div>
-            """
-        ),
-        unsafe_allow_html=True
-    )
+        st.caption(
+            f"Tariff Rs "
+            f"{first_bill['rate']:.2f}/kWh"
+        )
 
 
-# Second Floor
+# =========================================================
+# SECOND FLOOR
+# =========================================================
 
 with c3:
 
-    st.markdown(
-        dedent(
-            f"""
-            <div class="main-card">
+    with st.container(border=True):
 
-                <div class="card-title">
-                    Second Floor · SFS82166
-                </div>
+        st.markdown(
+            "**Second Floor · SFS82166**"
+        )
 
-                <div class="big-number">
-                    {second_units} kWh
-                </div>
+        st.metric(
+            "Consumption",
+            f"{second_units} kWh"
+        )
 
-                <div class="bill-number">
-                    Rs {second_bill:,.0f}
-                </div>
+        st.metric(
+            "Estimated Bill",
+            f"Rs {second_bill['total']:,.0f}"
+        )
 
-                <div class="rate">
-                    Rs {second_rate:.2f}/kWh
-                </div>
-
-            </div>
-            """
-        ),
-        unsafe_allow_html=True
-    )
+        st.caption(
+            f"Tariff Rs "
+            f"{second_bill['rate']:.2f}/kWh"
+        )
 
 
 # =========================================================
-# TABLE
+# READINGS TABLE
 # =========================================================
+
+st.subheader("Readings")
 
 rows = []
 
 
-for i in range(len(READINGS) - 1, -1, -1):
+for i in range(
+    len(READINGS) - 1,
+    -1,
+    -1
+):
 
     reading = READINGS[i]
 
-    if i > 0:
-        previous = READINGS[i - 1]
+    date_text = (
+        reading["datetime"]
+        .strftime(
+            "%d-%b-%Y %I:%M %p"
+        )
+    )
 
-        first_daily = (
-            reading["first"] -
-            previous["first"]
+
+    # -----------------------------------------------------
+    # NO EARLIER PHOTO AVAILABLE
+    # -----------------------------------------------------
+
+    if i == 0:
+
+        rows.append(
+            {
+                "Date": date_text,
+                "Meter":
+                    "Ground Floor · TP66310",
+                "Consumption":
+                    "—",
+                "Estimated Daily Cost":
+                    "—"
+            }
         )
 
-        second_daily = (
-            reading["second"] -
-            previous["second"]
+        rows.append(
+            {
+                "Date": date_text,
+                "Meter":
+                    "First Floor · SFS23934",
+                "Consumption":
+                    "—",
+                "Estimated Daily Cost":
+                    "—"
+            }
         )
 
-        tp_daily = (
-            reading["tp_off"] +
-            reading["tp_peak"]
-            -
-            previous["tp_off"]
-            -
-            previous["tp_peak"]
+        rows.append(
+            {
+                "Date": date_text,
+                "Meter":
+                    "Second Floor · SFS82166",
+                "Consumption":
+                    "—",
+                "Estimated Daily Cost":
+                    "—"
+            }
         )
 
-    else:
-
-        first_daily = None
-        second_daily = None
-        tp_daily = None
+        continue
 
 
-    # Accumulated units at this reading
+    previous = READINGS[i - 1]
 
-    first_acc = (
+
+    # =====================================================
+    # GROUND FLOOR INTERVAL
+    # =====================================================
+
+    ground_off_delta = (
+        reading["ground_off"] -
+        previous["ground_off"]
+    )
+
+    ground_peak_delta = (
+        reading["ground_peak"] -
+        previous["ground_peak"]
+    )
+
+    ground_delta = (
+        ground_off_delta +
+        ground_peak_delta
+    )
+
+    ground_daily_cost = (
+        ground_off_delta *
+        GROUND_OFF_RATE
+        +
+        ground_peak_delta *
+        GROUND_PEAK_RATE
+    )
+
+
+    rows.append(
+        {
+            "Date": date_text,
+
+            "Meter":
+                "Ground Floor · TP66310",
+
+            "Consumption":
+                f"{ground_delta} kWh",
+
+            "Estimated Daily Cost":
+                f"Rs {ground_daily_cost:,.0f}"
+        }
+    )
+
+
+    # =====================================================
+    # FIRST FLOOR INTERVAL
+    # =====================================================
+
+    first_delta = (
+        reading["first"] -
+        previous["first"]
+    )
+
+    first_accumulated = (
         reading["first"] -
         FIRST_START
     )
 
-    second_acc = (
+    first_daily_rate, _, _ = (
+        single_phase_tariff(
+            first_accumulated
+        )
+    )
+
+    first_daily_cost = (
+        first_delta *
+        first_daily_rate
+    )
+
+
+    rows.append(
+        {
+            "Date": date_text,
+
+            "Meter":
+                "First Floor · SFS23934",
+
+            "Consumption":
+                f"{first_delta} kWh",
+
+            "Estimated Daily Cost":
+                f"Rs {first_daily_cost:,.0f}"
+        }
+    )
+
+
+    # =====================================================
+    # SECOND FLOOR INTERVAL
+    # =====================================================
+
+    second_delta = (
+        reading["second"] -
+        previous["second"]
+    )
+
+    second_accumulated = (
         reading["second"] -
         SECOND_START
     )
 
-    tp_off_acc = (
-        reading["tp_off"] -
-        TP_OFF_START
+    second_daily_rate, _, _ = (
+        single_phase_tariff(
+            second_accumulated
+        )
     )
 
-    tp_peak_acc = (
-        reading["tp_peak"] -
-        TP_PEAK_START
-    )
-
-
-    first_estimate, _ = single_phase_bill(
-        first_acc,
-        5
-    )
-
-    second_estimate, _ = single_phase_bill(
-        second_acc,
-        3
-    )
-
-    _, _, tp_estimate, _, _, _ = three_phase_bill(
-        tp_off_acc,
-        tp_peak_acc
-    )
-
-
-    date_text = reading["datetime"].strftime(
-        "%d-%b-%Y %I:%M %p"
+    second_daily_cost = (
+        second_delta *
+        second_daily_rate
     )
 
 
     rows.append(
         {
             "Date": date_text,
-            "Meter": "Ground Floor · TP66310",
-            "Daily Consumption":
-                "—"
-                if tp_daily is None
-                else f"{tp_daily} kWh",
-            "Estimated Bill":
-                f"Rs {tp_estimate:,.0f}"
+
+            "Meter":
+                "Second Floor · SFS82166",
+
+            "Consumption":
+                f"{second_delta} kWh",
+
+            "Estimated Daily Cost":
+                f"Rs {second_daily_cost:,.0f}"
         }
     )
 
 
-    rows.append(
-        {
-            "Date": date_text,
-            "Meter": "First Floor · SFS23934",
-            "Daily Consumption":
-                "—"
-                if first_daily is None
-                else f"{first_daily} kWh",
-            "Estimated Bill":
-                f"Rs {first_estimate:,.0f}"
-        }
-    )
-
-
-    rows.append(
-        {
-            "Date": date_text,
-            "Meter": "Second Floor · SFS82166",
-            "Daily Consumption":
-                "—"
-                if second_daily is None
-                else f"{second_daily} kWh",
-            "Estimated Bill":
-                f"Rs {second_estimate:,.0f}"
-        }
-    )
-
-
-st.markdown(
-    '<div class="section">Readings</div>',
-    unsafe_allow_html=True
-)
-
+# =========================================================
+# DISPLAY TABLE
+# =========================================================
 
 df = pd.DataFrame(rows)
 
