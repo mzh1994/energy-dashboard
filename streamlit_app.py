@@ -16,6 +16,8 @@ st.set_page_config(
 
 # =========================================================
 # BILLING CYCLE
+# Previous KE reading date: 04-Sep-2026
+# Current cycle: 05-Sep-2026 to 04-Oct-2026
 # =========================================================
 
 CYCLE_START = date(2026, 9, 5)
@@ -23,7 +25,9 @@ CYCLE_END = date(2026, 10, 4)
 
 CYCLE_LABEL = "05 Sep – 04 Oct 2026"
 
-CYCLE_DAYS = (CYCLE_END - CYCLE_START).days + 1
+CYCLE_DAYS = (
+    CYCLE_END - CYCLE_START
+).days + 1
 
 
 # =========================================================
@@ -37,7 +41,7 @@ SECOND_METER = "SFS82166"
 
 # =========================================================
 # PREVIOUS KE BILL BASELINES
-# Reading date: 04-Sep-2026
+# Reading Date: 04-Sep-2026
 # =========================================================
 
 # Ground Floor - 3 Phase TOU
@@ -64,31 +68,38 @@ SECOND_LAST_BILL = 5708.64
 
 # =========================================================
 # READINGS
-# Add every new reading at the bottom
+#
+# Add each new meter reading at the bottom.
 # =========================================================
 
 READINGS = [
 
     {
         "datetime": datetime(2026, 9, 28, 9, 0),
+
         "first": 5046,
         "second": 2118,
+
         "ground_off": 5303,
         "ground_peak": 732,
     },
 
     {
         "datetime": datetime(2026, 9, 29, 8, 15),
+
         "first": 5062,
         "second": 2118,
+
         "ground_off": 5303,
         "ground_peak": 733,
     },
 
     {
         "datetime": datetime(2026, 9, 30, 8, 7),
+
         "first": 5078,
         "second": 2118,
+
         "ground_off": 5304,
         "ground_peak": 733,
     },
@@ -101,8 +112,12 @@ READINGS = [
 # =========================================================
 
 PHL_RATE = 3.23
+
 ELECTRICITY_DUTY_RATE = 0.015
 SALES_TAX_RATE = 0.18
+
+
+# Ground Floor TOU rates
 
 GROUND_OFF_RATE = 34.53
 GROUND_PEAK_RATE = 46.85
@@ -148,13 +163,21 @@ def single_phase_tariff(units):
 
 def single_phase_bill(units, load_kw):
 
-    rate, fixed_rate, muct = single_phase_tariff(units)
+    rate, fixed_rate, muct = (
+        single_phase_tariff(units)
+    )
 
-    energy = units * rate
+    energy = (
+        units * rate
+    )
 
-    fixed = load_kw * fixed_rate
+    fixed = (
+        load_kw * fixed_rate
+    )
 
-    phl = units * PHL_RATE
+    phl = (
+        units * PHL_RATE
+    )
 
     electricity_duty = (
         energy + fixed
@@ -185,25 +208,32 @@ def single_phase_bill(units, load_kw):
 
 
 # =========================================================
-# GROUND FLOOR 3-PHASE BILL
+# GROUND FLOOR 3-PHASE TOU BILL
 # =========================================================
 
-def ground_bill(off_units, peak_units):
+def ground_bill(
+    off_units,
+    peak_units
+):
 
     off_energy = (
-        off_units * GROUND_OFF_RATE
+        off_units
+        * GROUND_OFF_RATE
     )
 
     peak_energy = (
-        peak_units * GROUND_PEAK_RATE
+        peak_units
+        * GROUND_PEAK_RATE
     )
 
     energy = (
-        off_energy + peak_energy
+        off_energy
+        + peak_energy
     )
 
     total_units = (
-        off_units + peak_units
+        off_units
+        + peak_units
     )
 
     fixed = (
@@ -212,7 +242,8 @@ def ground_bill(off_units, peak_units):
     )
 
     phl = (
-        total_units * PHL_RATE
+        total_units
+        * PHL_RATE
     )
 
     electricity_duty = (
@@ -247,15 +278,21 @@ def ground_bill(off_units, peak_units):
 
 latest = READINGS[-1]
 
-latest_date = latest["datetime"].date()
+latest_date = (
+    latest["datetime"].date()
+)
 
 days_passed = (
-    latest_date - CYCLE_START
+    latest_date
+    - CYCLE_START
 ).days + 1
 
 days_passed = max(
     1,
-    min(days_passed, CYCLE_DAYS)
+    min(
+        days_passed,
+        CYCLE_DAYS
+    )
 )
 
 
@@ -264,11 +301,13 @@ days_passed = max(
 # =========================================================
 
 first_units = (
-    latest["first"] - FIRST_START
+    latest["first"]
+    - FIRST_START
 )
 
 second_units = (
-    latest["second"] - SECOND_START
+    latest["second"]
+    - SECOND_START
 )
 
 ground_off_units = (
@@ -291,19 +330,25 @@ ground_total_units = (
 # CURRENT BILL ESTIMATES
 # =========================================================
 
-first_bill = single_phase_bill(
-    first_units,
-    5
+first_bill = (
+    single_phase_bill(
+        first_units,
+        5
+    )
 )
 
-second_bill = single_phase_bill(
-    second_units,
-    3
+second_bill = (
+    single_phase_bill(
+        second_units,
+        3
+    )
 )
 
-ground_bill_data = ground_bill(
-    ground_off_units,
-    ground_peak_units
+ground_bill_data = (
+    ground_bill(
+        ground_off_units,
+        ground_peak_units
+    )
 )
 
 
@@ -311,14 +356,20 @@ ground_bill_data = ground_bill(
 # PREVIOUS MONTH ACTUAL
 # =========================================================
 
-st.subheader("September 2026 Actual")
+st.subheader(
+    "September 2026 Actual"
+)
 
 c1, c2, c3 = st.columns(3)
 
 
+# Ground Floor
+
 with c1:
 
-    with st.container(border=True):
+    with st.container(
+        border=True
+    ):
 
         st.markdown(
             "**Ground Floor · TP66310**"
@@ -339,9 +390,13 @@ with c1:
         )
 
 
+# First Floor
+
 with c2:
 
-    with st.container(border=True):
+    with st.container(
+        border=True
+    ):
 
         st.markdown(
             "**First Floor · SFS23934**"
@@ -362,9 +417,13 @@ with c2:
         )
 
 
+# Second Floor
+
 with c3:
 
-    with st.container(border=True):
+    with st.container(
+        border=True
+    ):
 
         st.markdown(
             "**Second Floor · SFS82166**"
@@ -398,12 +457,14 @@ c1, c2, c3 = st.columns(3)
 
 
 # =========================================================
-# GROUND FLOOR
+# GROUND FLOOR CARD
 # =========================================================
 
 with c1:
 
-    with st.container(border=True):
+    with st.container(
+        border=True
+    ):
 
         st.markdown(
             "**Ground Floor · TP66310**"
@@ -423,7 +484,9 @@ with c1:
             )
 
             st.caption(
-                f"Rs {GROUND_OFF_RATE:.2f}/unit"
+                f"Rs "
+                f"{GROUND_OFF_RATE:.2f}"
+                f"/unit"
             )
 
         with p2:
@@ -434,7 +497,9 @@ with c1:
             )
 
             st.caption(
-                f"Rs {GROUND_PEAK_RATE:.2f}/unit"
+                f"Rs "
+                f"{GROUND_PEAK_RATE:.2f}"
+                f"/unit"
             )
 
         st.divider()
@@ -446,17 +511,20 @@ with c1:
 
         st.metric(
             "Estimated Bill",
-            f"Rs {ground_bill_data['total']:,.0f}"
+            f"Rs "
+            f"{ground_bill_data['total']:,.0f}"
         )
 
 
 # =========================================================
-# FIRST FLOOR
+# FIRST FLOOR CARD
 # =========================================================
 
 with c2:
 
-    with st.container(border=True):
+    with st.container(
+        border=True
+    ):
 
         st.markdown(
             "**First Floor · SFS23934**"
@@ -473,21 +541,26 @@ with c2:
 
         st.metric(
             "Estimated Bill",
-            f"Rs {first_bill['total']:,.0f}"
+            f"Rs "
+            f"{first_bill['total']:,.0f}"
         )
 
         st.caption(
-            f"Rs {first_bill['rate']:.2f}/unit"
+            f"Rs "
+            f"{first_bill['rate']:.2f}"
+            f"/unit"
         )
 
 
 # =========================================================
-# SECOND FLOOR
+# SECOND FLOOR CARD
 # =========================================================
 
 with c3:
 
-    with st.container(border=True):
+    with st.container(
+        border=True
+    ):
 
         st.markdown(
             "**Second Floor · SFS82166**"
@@ -504,22 +577,33 @@ with c3:
 
         st.metric(
             "Estimated Bill",
-            f"Rs {second_bill['total']:,.0f}"
+            f"Rs "
+            f"{second_bill['total']:,.0f}"
         )
 
         st.caption(
-            f"Rs {second_bill['rate']:.2f}/unit"
+            f"Rs "
+            f"{second_bill['rate']:.2f}"
+            f"/unit"
         )
 
 
 # =========================================================
-# READINGS TABLE
+# DAILY CONSUMPTION TABLES
 # =========================================================
 
-st.subheader("Readings")
+st.subheader(
+    "Daily Consumption"
+)
 
-rows = []
+ground_rows = []
+first_rows = []
+second_rows = []
 
+
+# =========================================================
+# BUILD TABLE DATA
+# =========================================================
 
 for i in range(
     len(READINGS) - 1,
@@ -532,50 +616,38 @@ for i in range(
     date_text = (
         reading["datetime"]
         .strftime(
-            "%d-%b-%Y %I:%M %p"
+            "%d-%b %I:%M %p"
         )
     )
 
 
     # =====================================================
-    # FIRST READING HAS NO PREVIOUS PHOTO
+    # FIRST PHOTO HAS NO PREVIOUS PHOTO
     # =====================================================
 
     if i == 0:
 
-        rows.append(
+        ground_rows.append(
             {
                 "Date": date_text,
-                "Meter":
-                    "Ground Floor · TP66310",
-                "Daily Consumption":
-                    "—",
-                "Est. Energy Cost":
-                    "—"
+                "Units": "—",
+                "Est. Cost": "—"
             }
         )
 
-        rows.append(
+        first_rows.append(
             {
                 "Date": date_text,
-                "Meter":
-                    "First Floor · SFS23934",
-                "Daily Consumption":
-                    "—",
-                "Est. Energy Cost":
-                    "—"
+                "Units": "—",
+                "Est. Cost": "—"
             }
         )
 
-        rows.append(
+        second_rows.append(
             {
                 "Date": date_text,
-                "Meter":
-                    "Second Floor · SFS82166",
-                "Daily Consumption":
-                    "—",
-                "Est. Energy Cost":
-                    "—"
+                "Units": "—",
+                "Est. Cost": "—"
             }
         )
 
@@ -586,7 +658,7 @@ for i in range(
 
 
     # =====================================================
-    # GROUND FLOOR DAILY USAGE
+    # GROUND FLOOR INTERVAL
     # =====================================================
 
     ground_off_delta = (
@@ -604,7 +676,7 @@ for i in range(
         + ground_peak_delta
     )
 
-    ground_daily_cost = (
+    ground_cost = (
         ground_off_delta
         * GROUND_OFF_RATE
         +
@@ -612,25 +684,21 @@ for i in range(
         * GROUND_PEAK_RATE
     )
 
-
-    rows.append(
+    ground_rows.append(
         {
             "Date": date_text,
 
-            "Meter":
-                "Ground Floor · TP66310",
-
-            "Daily Consumption":
+            "Units":
                 f"{ground_delta} kWh",
 
-            "Est. Energy Cost":
-                f"Rs {ground_daily_cost:,.0f}"
+            "Est. Cost":
+                f"Rs {ground_cost:,.0f}"
         }
     )
 
 
     # =====================================================
-    # FIRST FLOOR DAILY USAGE
+    # FIRST FLOOR INTERVAL
     # =====================================================
 
     first_delta = (
@@ -643,36 +711,32 @@ for i in range(
         - FIRST_START
     )
 
-    first_daily_rate, _, _ = (
+    first_rate, _, _ = (
         single_phase_tariff(
             first_accumulated
         )
     )
 
-    first_daily_cost = (
+    first_cost = (
         first_delta
-        * first_daily_rate
+        * first_rate
     )
 
-
-    rows.append(
+    first_rows.append(
         {
             "Date": date_text,
 
-            "Meter":
-                "First Floor · SFS23934",
-
-            "Daily Consumption":
+            "Units":
                 f"{first_delta} kWh",
 
-            "Est. Energy Cost":
-                f"Rs {first_daily_cost:,.0f}"
+            "Est. Cost":
+                f"Rs {first_cost:,.0f}"
         }
     )
 
 
     # =====================================================
-    # SECOND FLOOR DAILY USAGE
+    # SECOND FLOOR INTERVAL
     # =====================================================
 
     second_delta = (
@@ -685,42 +749,101 @@ for i in range(
         - SECOND_START
     )
 
-    second_daily_rate, _, _ = (
+    second_rate, _, _ = (
         single_phase_tariff(
             second_accumulated
         )
     )
 
-    second_daily_cost = (
+    second_cost = (
         second_delta
-        * second_daily_rate
+        * second_rate
     )
 
-
-    rows.append(
+    second_rows.append(
         {
             "Date": date_text,
 
-            "Meter":
-                "Second Floor · SFS82166",
-
-            "Daily Consumption":
+            "Units":
                 f"{second_delta} kWh",
 
-            "Est. Energy Cost":
-                f"Rs {second_daily_cost:,.0f}"
+            "Est. Cost":
+                f"Rs {second_cost:,.0f}"
         }
     )
 
 
 # =========================================================
-# DISPLAY TABLE
+# THREE SIDE-BY-SIDE TABLES
 # =========================================================
 
-df = pd.DataFrame(rows)
+t1, t2, t3 = st.columns(3)
 
-st.dataframe(
-    df,
-    use_container_width=True,
-    hide_index=True
-)
+
+# Ground Floor Table
+
+with t1:
+
+    st.markdown(
+        "**Ground Floor · TP66310**"
+    )
+
+    st.caption(
+        "3 Phase TOU"
+    )
+
+    ground_df = pd.DataFrame(
+        ground_rows
+    )
+
+    st.dataframe(
+        ground_df,
+        use_container_width=True,
+        hide_index=True
+    )
+
+
+# First Floor Table
+
+with t2:
+
+    st.markdown(
+        "**First Floor · SFS23934**"
+    )
+
+    st.caption(
+        "Single Phase"
+    )
+
+    first_df = pd.DataFrame(
+        first_rows
+    )
+
+    st.dataframe(
+        first_df,
+        use_container_width=True,
+        hide_index=True
+    )
+
+
+# Second Floor Table
+
+with t3:
+
+    st.markdown(
+        "**Second Floor · SFS82166**"
+    )
+
+    st.caption(
+        "Single Phase"
+    )
+
+    second_df = pd.DataFrame(
+        second_rows
+    )
+
+    st.dataframe(
+        second_df,
+        use_container_width=True,
+        hide_index=True
+    )
