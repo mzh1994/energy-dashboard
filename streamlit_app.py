@@ -22,27 +22,29 @@ st.markdown("""
 
 /* Main page */
 .block-container {
-    padding-top: 0.8rem;
-    padding-bottom: 1.2rem;
+    padding-top: 1.2rem;
+    padding-bottom: 1.5rem;
     max-width: 1450px;
 }
 
-/* General vertical spacing */
+/* Overall vertical spacing */
 div[data-testid="stVerticalBlock"] {
     gap: 0.45rem;
 }
 
-/* Section headings */
-h2 {
-    font-size: 1.18rem !important;
-    margin-top: 0.6rem !important;
-    margin-bottom: 0.35rem !important;
-    font-weight: 650 !important;
-}
-
-/* Column gaps */
+/* Columns */
 div[data-testid="stHorizontalBlock"] {
     gap: 0.65rem;
+}
+
+/* Section headings */
+.section-title {
+    font-size: 1.45rem;
+    font-weight: 700;
+    line-height: 1.2;
+    margin-top: 0.8rem;
+    margin-bottom: 0.65rem;
+    color: inherit;
 }
 
 /* Bordered cards */
@@ -50,12 +52,12 @@ div[data-testid="stVerticalBlockBorderWrapper"] {
     border-radius: 10px !important;
 }
 
-/* Card padding */
+/* Card inner padding */
 div[data-testid="stVerticalBlockBorderWrapper"] > div {
     padding: 0.55rem 0.75rem !important;
 }
 
-/* Markdown paragraph spacing */
+/* Markdown spacing */
 div[data-testid="stMarkdownContainer"] p {
     margin-bottom: 0.08rem !important;
 }
@@ -86,20 +88,15 @@ div[data-testid="stCaptionContainer"] {
     margin-top: -0.10rem !important;
 }
 
-/* Dividers */
+/* Divider */
 hr {
     margin-top: 0.25rem !important;
     margin-bottom: 0.25rem !important;
 }
 
-/* Dataframes */
+/* Tables */
 div[data-testid="stDataFrame"] {
     font-size: 0.78rem;
-}
-
-/* Reduce excess dataframe whitespace */
-div[data-testid="stDataFrameResizable"] {
-    min-height: 0 !important;
 }
 
 </style>
@@ -126,7 +123,6 @@ CYCLE_DAYS = (
 # =========================================================
 
 # Ground Floor - 3 Phase TOU
-
 GROUND_OFF_START = 5281
 GROUND_PEAK_START = 723
 
@@ -135,7 +131,6 @@ GROUND_LAST_BILL = 3790.27
 
 
 # First Floor - Single Phase
-
 FIRST_START = 4757
 
 FIRST_LAST_UNITS = 262
@@ -143,7 +138,6 @@ FIRST_LAST_BILL = 14482.29
 
 
 # Second Floor - Single Phase
-
 SECOND_START = 2111
 
 SECOND_LAST_UNITS = 110
@@ -152,8 +146,7 @@ SECOND_LAST_BILL = 5708.64
 
 # =========================================================
 # READINGS
-#
-# Add each new reading at the bottom.
+# Add each new reading at the bottom
 # =========================================================
 
 READINGS = [
@@ -196,7 +189,6 @@ SALES_TAX_RATE = 0.18
 
 
 # Ground Floor TOU
-
 GROUND_OFF_RATE = 34.53
 GROUND_PEAK_RATE = 46.85
 
@@ -278,7 +270,7 @@ def single_phase_bill(units, load_kw):
 
 
 # =========================================================
-# GROUND FLOOR 3-PHASE TOU BILL ESTIMATE
+# GROUND FLOOR 3-PHASE TOU BILL
 # =========================================================
 
 def ground_bill(off_units, peak_units):
@@ -415,7 +407,10 @@ ground_bill_data = ground_bill(
 # PREVIOUS MONTH ACTUAL
 # =========================================================
 
-st.subheader("September 2026 Actual")
+st.markdown(
+    '<div class="section-title">September 2026 Actual</div>',
+    unsafe_allow_html=True
+)
 
 c1, c2, c3 = st.columns(
     3,
@@ -517,9 +512,13 @@ with c3:
 # CURRENT BILLING CYCLE
 # =========================================================
 
-st.subheader(
-    f"{CYCLE_LABEL} "
-    f"(Day {days_passed} of {CYCLE_DAYS})"
+st.markdown(
+    f'''
+    <div class="section-title">
+        {CYCLE_LABEL} (Day {days_passed} of {CYCLE_DAYS})
+    </div>
+    ''',
+    unsafe_allow_html=True
 )
 
 c1, c2, c3 = st.columns(
@@ -668,10 +667,13 @@ with c3:
 
 
 # =========================================================
-# DAILY CONSUMPTION TABLES
+# DAILY CONSUMPTION
 # =========================================================
 
-st.subheader("Daily Consumption")
+st.markdown(
+    '<div class="section-title">Daily Consumption</div>',
+    unsafe_allow_html=True
+)
 
 
 ground_rows = []
@@ -679,7 +681,9 @@ first_rows = []
 second_rows = []
 
 
-# Totals between uploaded photos
+# =========================================================
+# TABLE TOTALS
+# =========================================================
 
 ground_table_units = 0
 ground_table_cost = 0
@@ -692,7 +696,7 @@ second_table_cost = 0
 
 
 # =========================================================
-# BUILD TABLE DATA
+# BUILD DAILY TABLE DATA
 # =========================================================
 
 for i in range(
@@ -709,10 +713,7 @@ for i in range(
     )
 
 
-    # =====================================================
-    # FIRST PHOTO HAS NO EARLIER PHOTO
-    # =====================================================
-
+    # First photo has no earlier comparison
     if i == 0:
 
         ground_rows.append({
@@ -856,13 +857,11 @@ ground_rows.append({
     "Est. Cost": f"Rs {ground_table_cost:,.0f}"
 })
 
-
 first_rows.append({
     "Date": "TOTAL",
     "Units": f"{first_table_units} kWh",
     "Est. Cost": f"Rs {first_table_cost:,.0f}"
 })
-
 
 second_rows.append({
     "Date": "TOTAL",
