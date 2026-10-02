@@ -20,46 +20,60 @@ st.set_page_config(
 st.markdown("""
 <style>
 
-/* Main page */
+/* Give enough room below Streamlit toolbar */
 .block-container {
-    padding-top: 1.2rem;
-    padding-bottom: 1.5rem;
-    max-width: 1450px;
+    padding-top: 4rem !important;
+    padding-bottom: 1rem !important;
+    max-width: 1500px;
 }
 
-/* Overall vertical spacing */
+/* Reduce general spacing */
 div[data-testid="stVerticalBlock"] {
-    gap: 0.45rem;
+    gap: 0.30rem !important;
 }
 
-/* Columns */
 div[data-testid="stHorizontalBlock"] {
-    gap: 0.65rem;
+    gap: 0.45rem !important;
 }
 
 /* Section headings */
 .section-title {
-    font-size: 1.45rem;
-    font-weight: 700;
-    line-height: 1.2;
-    margin-top: 0.8rem;
-    margin-bottom: 0.65rem;
-    color: inherit;
+    font-size: 14px !important;
+    font-weight: 700 !important;
+    line-height: 1.2 !important;
+    margin-top: 8px !important;
+    margin-bottom: 6px !important;
 }
 
-/* Bordered cards */
+/* Cards */
 div[data-testid="stVerticalBlockBorderWrapper"] {
-    border-radius: 10px !important;
+    border-radius: 8px !important;
 }
 
-/* Card inner padding */
 div[data-testid="stVerticalBlockBorderWrapper"] > div {
-    padding: 0.55rem 0.75rem !important;
+    padding: 0.38rem 0.55rem !important;
 }
 
-/* Markdown spacing */
+/* Normal markdown */
 div[data-testid="stMarkdownContainer"] p {
-    margin-bottom: 0.08rem !important;
+    font-size: 10px !important;
+    line-height: 1.20 !important;
+    margin-top: 0 !important;
+    margin-bottom: 1px !important;
+}
+
+/* Bold meter/card title */
+div[data-testid="stMarkdownContainer"] strong {
+    font-size: 12px !important;
+    font-weight: 700 !important;
+}
+
+/* Caption */
+div[data-testid="stCaptionContainer"] {
+    font-size: 9px !important;
+    line-height: 1.15 !important;
+    margin-top: -2px !important;
+    margin-bottom: 1px !important;
 }
 
 /* Metrics */
@@ -68,35 +82,34 @@ div[data-testid="stMetric"] {
     margin: 0 !important;
 }
 
-/* Metric labels */
+/* Metric label */
 div[data-testid="stMetricLabel"] p {
-    font-size: 0.72rem !important;
-    opacity: 0.72;
-    margin-bottom: 0 !important;
+    font-size: 10px !important;
+    line-height: 1.1 !important;
+    margin: 0 !important;
 }
 
-/* Metric values */
+/* Metric value */
 div[data-testid="stMetricValue"] {
-    font-size: 1.35rem !important;
+    font-size: 17px !important;
     line-height: 1.05 !important;
-    font-weight: 650 !important;
-}
-
-/* Captions */
-div[data-testid="stCaptionContainer"] {
-    font-size: 0.69rem !important;
-    margin-top: -0.10rem !important;
+    font-weight: 700 !important;
 }
 
 /* Divider */
 hr {
-    margin-top: 0.25rem !important;
-    margin-bottom: 0.25rem !important;
+    margin-top: 3px !important;
+    margin-bottom: 3px !important;
 }
 
-/* Tables */
+/* Table text */
 div[data-testid="stDataFrame"] {
-    font-size: 0.78rem;
+    font-size: 10px !important;
+}
+
+/* Reduce unnecessary dataframe gap */
+div[data-testid="stDataFrameResizable"] {
+    min-height: 0 !important;
 }
 
 </style>
@@ -174,13 +187,14 @@ READINGS = [
         "ground_off": 5304,
         "ground_peak": 733,
     },
+
     {
-    "datetime": datetime(2026, 10, 2, 8, 18),
-    "first": 5100,
-    "second": 2178,
-    "ground_off": 5305,
-    "ground_peak": 734,
-},
+        "datetime": datetime(2026, 10, 2, 8, 18),
+        "first": 5100,
+        "second": 2178,
+        "ground_off": 5305,
+        "ground_peak": 734,
+    },
 
 ]
 
@@ -243,9 +257,7 @@ def single_phase_bill(units, load_kw):
     rate, fixed_rate, muct = single_phase_tariff(units)
 
     energy = units * rate
-
     fixed = load_kw * fixed_rate
-
     phl = units * PHL_RATE
 
     electricity_duty = (
@@ -283,23 +295,19 @@ def single_phase_bill(units, load_kw):
 def ground_bill(off_units, peak_units):
 
     off_energy = (
-        off_units
-        * GROUND_OFF_RATE
+        off_units * GROUND_OFF_RATE
     )
 
     peak_energy = (
-        peak_units
-        * GROUND_PEAK_RATE
+        peak_units * GROUND_PEAK_RATE
     )
 
     energy = (
-        off_energy
-        + peak_energy
+        off_energy + peak_energy
     )
 
     total_units = (
-        off_units
-        + peak_units
+        off_units + peak_units
     )
 
     fixed = (
@@ -308,8 +316,7 @@ def ground_bill(off_units, peak_units):
     )
 
     phl = (
-        total_units
-        * PHL_RATE
+        total_units * PHL_RATE
     )
 
     electricity_duty = (
@@ -339,7 +346,7 @@ def ground_bill(off_units, peak_units):
 
 
 # =========================================================
-# LATEST READING
+# CURRENT VALUES
 # =========================================================
 
 latest = READINGS[-1]
@@ -347,8 +354,7 @@ latest = READINGS[-1]
 latest_date = latest["datetime"].date()
 
 days_passed = (
-    latest_date
-    - CYCLE_START
+    latest_date - CYCLE_START
 ).days + 1
 
 days_passed = max(
@@ -361,7 +367,7 @@ days_passed = max(
 
 
 # =========================================================
-# CURRENT CONSUMPTION
+# CURRENT UNITS
 # =========================================================
 
 first_units = (
@@ -391,7 +397,7 @@ ground_total_units = (
 
 
 # =========================================================
-# CURRENT BILL ESTIMATES
+# BILL ESTIMATES
 # =========================================================
 
 first_bill = single_phase_bill(
@@ -411,6 +417,35 @@ ground_bill_data = ground_bill(
 
 
 # =========================================================
+# TOTALS
+# =========================================================
+
+total_current_units = (
+    ground_total_units
+    + first_units
+    + second_units
+)
+
+total_estimated_bill = (
+    ground_bill_data["total"]
+    + first_bill["total"]
+    + second_bill["total"]
+)
+
+total_previous_units = (
+    GROUND_LAST_UNITS
+    + FIRST_LAST_UNITS
+    + SECOND_LAST_UNITS
+)
+
+total_previous_bill = (
+    GROUND_LAST_BILL
+    + FIRST_LAST_BILL
+    + SECOND_LAST_BILL
+)
+
+
+# =========================================================
 # PREVIOUS MONTH ACTUAL
 # =========================================================
 
@@ -419,11 +454,13 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-c1, c2, c3 = st.columns(
-    3,
+c1, c2, c3, c4 = st.columns(
+    4,
     gap="small"
 )
 
+
+# Ground Floor
 
 with c1:
 
@@ -443,17 +480,19 @@ with c1:
         with a:
 
             st.metric(
-                "Actual Units",
+                "Units",
                 f"{GROUND_LAST_UNITS} kWh"
             )
 
         with b:
 
             st.metric(
-                "Actual Bill",
+                "Bill",
                 f"Rs {GROUND_LAST_BILL:,.0f}"
             )
 
+
+# First Floor
 
 with c2:
 
@@ -473,17 +512,19 @@ with c2:
         with a:
 
             st.metric(
-                "Actual Units",
+                "Units",
                 f"{FIRST_LAST_UNITS} kWh"
             )
 
         with b:
 
             st.metric(
-                "Actual Bill",
+                "Bill",
                 f"Rs {FIRST_LAST_BILL:,.0f}"
             )
 
+
+# Second Floor
 
 with c3:
 
@@ -503,15 +544,47 @@ with c3:
         with a:
 
             st.metric(
-                "Actual Units",
+                "Units",
                 f"{SECOND_LAST_UNITS} kWh"
             )
 
         with b:
 
             st.metric(
-                "Actual Bill",
+                "Bill",
                 f"Rs {SECOND_LAST_BILL:,.0f}"
+            )
+
+
+# Previous Month Total
+
+with c4:
+
+    with st.container(border=True):
+
+        st.markdown(
+            "**TOTAL · All Floors**"
+        )
+
+        st.caption("Actual")
+
+        a, b = st.columns(
+            2,
+            gap="small"
+        )
+
+        with a:
+
+            st.metric(
+                "Units",
+                f"{total_previous_units} kWh"
+            )
+
+        with b:
+
+            st.metric(
+                "Bill",
+                f"Rs {total_previous_bill:,.0f}"
             )
 
 
@@ -528,14 +601,14 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-c1, c2, c3 = st.columns(
-    3,
+c1, c2, c3, c4 = st.columns(
+    4,
     gap="small"
 )
 
 
 # =========================================================
-# GROUND FLOOR CARD
+# GROUND FLOOR
 # =========================================================
 
 with c1:
@@ -585,20 +658,20 @@ with c1:
         with a:
 
             st.metric(
-                "Total Units",
+                "Total",
                 f"{ground_total_units} kWh"
             )
 
         with b:
 
             st.metric(
-                "Estimated Bill",
+                "Est. Bill",
                 f"Rs {ground_bill_data['total']:,.0f}"
             )
 
 
 # =========================================================
-# FIRST FLOOR CARD
+# FIRST FLOOR
 # =========================================================
 
 with c2:
@@ -630,13 +703,13 @@ with c2:
         with b:
 
             st.metric(
-                "Estimated Bill",
+                "Est. Bill",
                 f"Rs {first_bill['total']:,.0f}"
             )
 
 
 # =========================================================
-# SECOND FLOOR CARD
+# SECOND FLOOR
 # =========================================================
 
 with c3:
@@ -668,8 +741,42 @@ with c3:
         with b:
 
             st.metric(
-                "Estimated Bill",
+                "Est. Bill",
                 f"Rs {second_bill['total']:,.0f}"
+            )
+
+
+# =========================================================
+# TOTAL CARD
+# =========================================================
+
+with c4:
+
+    with st.container(border=True):
+
+        st.markdown(
+            "**TOTAL · All Floors**"
+        )
+
+        st.caption("Current Cycle")
+
+        a, b = st.columns(
+            2,
+            gap="small"
+        )
+
+        with a:
+
+            st.metric(
+                "Total kWh",
+                f"{total_current_units} kWh"
+            )
+
+        with b:
+
+            st.metric(
+                "Est. Bill",
+                f"Rs {total_estimated_bill:,.0f}"
             )
 
 
@@ -688,10 +795,6 @@ first_rows = []
 second_rows = []
 
 
-# =========================================================
-# TABLE TOTALS
-# =========================================================
-
 ground_table_units = 0
 ground_table_cost = 0
 
@@ -703,7 +806,7 @@ second_table_cost = 0
 
 
 # =========================================================
-# BUILD DAILY TABLE DATA
+# BUILD TABLE DATA
 # =========================================================
 
 for i in range(
@@ -720,7 +823,6 @@ for i in range(
     )
 
 
-    # First photo has no earlier comparison
     if i == 0:
 
         ground_rows.append({
@@ -878,7 +980,7 @@ second_rows.append({
 
 
 # =========================================================
-# THREE SIDE-BY-SIDE TABLES
+# THREE TABLES
 # =========================================================
 
 t1, t2, t3 = st.columns(
@@ -886,8 +988,6 @@ t1, t2, t3 = st.columns(
     gap="small"
 )
 
-
-# Ground Floor
 
 with t1:
 
@@ -905,11 +1005,9 @@ with t1:
         ground_df,
         use_container_width=True,
         hide_index=True,
-        height=180
+        height=190
     )
 
-
-# First Floor
 
 with t2:
 
@@ -927,11 +1025,9 @@ with t2:
         first_df,
         use_container_width=True,
         hide_index=True,
-        height=180
+        height=190
     )
 
-
-# Second Floor
 
 with t3:
 
@@ -949,5 +1045,5 @@ with t3:
         second_df,
         use_container_width=True,
         hide_index=True,
-        height=180
+        height=190
     )
