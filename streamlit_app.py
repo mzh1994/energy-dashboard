@@ -217,6 +217,12 @@ READINGS = [
     "second": 2178,
     "ground_off": 5306,
     "ground_peak": 734,
+},{
+    "datetime": datetime(2026, 10, 4, 15, 18),
+    "first": 5121,
+    "second": 2178,
+    "ground_off": 5307,
+    "ground_peak": 735,
 },
 
 ]
