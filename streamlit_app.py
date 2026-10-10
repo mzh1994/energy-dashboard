@@ -451,7 +451,7 @@ READINGS = [
 },
 
 {
-    "datetime": datetime(2026, 10, 10, 8, 24),
+    "datetime": datetime(2026, 10, 10, 13, 50),
     "first": 5191,
     "second": 2178,
     "ground_off": 5313,
